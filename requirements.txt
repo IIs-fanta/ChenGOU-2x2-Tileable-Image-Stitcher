@@ -1,0 +1,4 @@
+Pillow==11.2.1
+TkinterDnD2==0.4.3
+pyinstaller
+packaging
