@@ -2,7 +2,8 @@
 
 ## 功能简介
 本工具用于将一张图片拼接成2x2的四方连续图案，支持批量处理，支持拖拽添加任务，支持选择输出格式（png、jpg、jpeg），并可自定义输出文件夹和文件名。
-![Uploading image.png…]()
+<img width="620" height="563" alt="image" src="https://github.com/user-attachments/assets/6faf1fdb-162a-4871-9334-86f96b236458" />
+
 
 ## 软件特性
 - 支持批量拖拽图片到窗口，自动加入任务队列
