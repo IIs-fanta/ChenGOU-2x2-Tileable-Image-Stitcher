@@ -27,6 +27,24 @@ def create_2x2_tile(input_image_path, output_image_path, out_format):
     except Exception as e:
         return False, str(e)
 
+def create_tile_grid(input_image_path, output_image_path, out_format, rows, cols):
+    try:
+        with Image.open(input_image_path) as img:
+            width, height = img.size
+            new_width = width * cols
+            new_height = height * rows
+            new_image = Image.new(img.mode, (new_width, new_height))
+            for i in range(cols):
+                for j in range(rows):
+                    new_image.paste(img, (i * width, j * height))
+            save_kwargs = {}
+            if out_format == 'png':
+                save_kwargs['compress_level'] = 0
+            new_image.save(output_image_path, format=out_format.upper(), **save_kwargs)
+        return True, output_image_path
+    except Exception as e:
+        return False, str(e)
+
 def parse_drop_files(files):
     # 支持多文件拖拽，返回文件路径列表
     if files.startswith('{') and files.endswith('}'):
@@ -69,16 +87,18 @@ def process_next_task():
     out_dir = output_dir_var.get()
     use_src_name = use_src_name_var.get()
     out_format = output_format_var.get()
+    rows = row_var.get()
+    cols = col_var.get()
     ext = out_format
     if use_src_name:
         base_name = os.path.splitext(os.path.basename(file_path))[0]
         out_name = f"{base_name}.{ext}"
     else:
-        out_name = f"陈狗四方连续2x2.{ext}"
+        out_name = f"陈狗四方连续{rows}x{cols}.{ext}"
     output_path = os.path.join(out_dir, out_name)
     status_var.set(f"正在处理：{os.path.basename(file_path)}")
     def do_process():
-        success, msg = create_2x2_tile(file_path, output_path, out_format)
+        success, msg = create_tile_grid(file_path, output_path, out_format, rows, cols)
         if success:
             task_listbox.itemconfig(idx, {'bg':'#d4ffd4'})
         else:
@@ -95,27 +115,25 @@ def process_next_task():
             status_var.set("全部处理完成！")
     threading.Thread(target=do_process).start()
 
-def execute_tasks():
-    if not processing_flag[0] and task_queue:
-        process_next_task()
-    elif not task_queue:
-        messagebox.showinfo("提示", "任务队列为空！")
-    else:
-        messagebox.showinfo("提示", "任务正在处理中，请稍候。")
-
 def main():
-    global output_dir_var, use_src_name_var, task_listbox, task_queue, progress_var, status_var, processing_flag, root, output_format_var
+    global output_dir_var, use_src_name_var, task_listbox, task_queue, progress_var, status_var, processing_flag, root, output_format_var, row_var, col_var
     root = TkinterDnD.Tk()
-    root.title("陈狗四方连续图片2x2拼接工具（批量拖拽，任务栏进度）")
+    # 初始化全局变量
+    row_var = IntVar(value=2)
+    col_var = IntVar(value=2)
+    root.title("陈狗四方连续图片拼接工具（批量拖拽，任务栏进度）")
     root.geometry("600x520")  # 增大高度，确保所有控件可见
+    
     import os
     if hasattr(sys, '_MEIPASS'):
         base_path = sys._MEIPASS
+        # 修正打包时的图标路径
+        ico_path = os.path.join(base_path, 'window.ico')
     else:
         base_path = os.path.dirname(__file__)
-    ico_path = os.path.join(base_path, 'window.ico')
+        ico_path = os.path.join(base_path, 'window.ico')
     root.iconbitmap(ico_path)
-    label = Label(root, text="请将四方连续图片文件拖到此窗口\n支持批量拖拽，自动生成陈狗四方连续2x2拼接图", font=("微软雅黑", 13), width=60, height=3, relief="ridge", borderwidth=2)
+    label = Label(root, text="请将四方连续图片文件拖到此窗口\n支持批量拖拽，自动生成陈狗四方连续拼接图", font=("微软雅黑", 13), width=60, height=3, relief="ridge", borderwidth=2)
     label.pack(padx=20, pady=10, expand=False, fill="x")
     label.drop_target_register(DND_FILES)
     label.dnd_bind('<<Drop>>', on_drop)
@@ -133,6 +151,10 @@ def main():
     format_frame.pack(pady=5, fill="x", padx=20)
     Label(format_frame, text="输出格式：").pack(side="left")
     OptionMenu(format_frame, output_format_var, "png", "jpg", "jpeg").pack(side="left")
+    Label(format_frame, text="行数：").pack(side="left", padx=(10, 2))
+    Entry(format_frame, textvariable=row_var, width=5).pack(side="left", padx=(0, 10))
+    Label(format_frame, text="列数：").pack(side="left", padx=(10, 2))
+    Entry(format_frame, textvariable=col_var, width=5).pack(side="left")
 
     # 是否使用源文件名
     use_src_name_var = BooleanVar(value=True)
@@ -155,6 +177,21 @@ def main():
             menu.add_command(label="清空队列", command=clear_task_queue)
         menu.tk_popup(event.x_root, event.y_root)
     task_listbox.bind("<Button-3>", show_context_menu)
+
+    # 定义执行任务函数
+    def execute_tasks():
+        global row_var, col_var
+        if not processing_flag[0] and task_queue:
+            rows = row_var.get()
+            cols = col_var.get()
+            if rows < 1 or cols < 1:
+                messagebox.showerror("错误", "行数和列数必须至少为1")
+                return
+            process_next_task()
+        elif not task_queue:
+            messagebox.showinfo("提示", "任务队列为空！")
+        else:
+            messagebox.showinfo("提示", "任务正在处理中，请稍候。")
 
     # 执行按钮
     Button(root, text="执行任务", command=execute_tasks, bg="#4CAF50", fg="white", font=("微软雅黑", 11)).pack(pady=5)
