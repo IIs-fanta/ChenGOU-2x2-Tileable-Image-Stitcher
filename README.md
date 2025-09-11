@@ -4,6 +4,7 @@
 
 ## 功能简介
 本工具用于将一张图片拼接成自定义行列数的四方连续图案，支持批量处理，支持拖拽添加任务，支持选择输出格式（png、jpg、jpeg），并可自定义输出文件夹和文件名。
+<img width="620" height="563" alt="image" src="https://github.com/user-attachments/assets/cb137cfd-7f3d-4f26-bf74-e2793d306e30" />
 
 ## 软件特性
 - 支持批量拖拽图片到窗口，自动加入任务队列
@@ -61,4 +62,5 @@ pip install -r requirements.txt
 - README文档更新，添加版本号和使用说明
 
 ## 联系方式
+
 如有问题或建议，请联系开发者。
